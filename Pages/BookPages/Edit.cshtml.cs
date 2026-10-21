@@ -1,75 +1,100 @@
-using Medrea_Diana_Lab2.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Medrea_Diana_Lab2.Models;
 
-namespace Medrea_Diana_Lab2.Pages.BookPages;
-
-public class EditModel : PageModel
+namespace Medrea_Diana_Lab2.Pages.BookPages
 {
-    private readonly Medrea_Diana_Lab2Context _context;
-
-    public EditModel(Medrea_Diana_Lab2Context context)
+    public class EditModel : BookCategoriesPageModel
     {
-        _context = context;
-    }
+        private readonly Medrea_Diana_Lab2Context _context;
 
-    [BindProperty]
-    public Book Book { get; set; } = default!;
-
-    public async Task<IActionResult> OnGetAsync(int? id)
-    {
-        if (id is null)
+        public EditModel(Medrea_Diana_Lab2Context context)
         {
-            return NotFound();
+            _context = context;
         }
 
-        var book = await _context.Book.FirstOrDefaultAsync(m => m.ID == id);
-        if (book is null)
-        {
-            return NotFound();
-        }
-        Book = book;
-        ViewData["PublisherID"] = new SelectList(_context.Set<Publisher>(), "ID", "PublisherName");
-        ViewData["AuthorID"] = new SelectList(_context.Authors, "ID", "FullName");
-        return Page();
-    }
+        [BindProperty]
+        public Book Book { get; set; } = default!;
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see https://aka.ms/RazorPagesCRUD.
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (!ModelState.IsValid)
+        public async Task<IActionResult> OnGetAsync(int? id)
         {
-            ViewData["PublisherID"] = new SelectList(_context.Set<Publisher>(), "ID", "PublisherName");
+            if (id == null || _context.Book == null)
+            {
+                return NotFound();
+            }
+
+            var book = await _context.Book
+                .Include(b => b.BookCategories)
+                .FirstOrDefaultAsync(m => m.ID == id);
+
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            Book = book;
+            PopulateAssignedCategoryData(_context, Book);
+
+            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName");
             ViewData["AuthorID"] = new SelectList(_context.Authors, "ID", "FullName");
             return Page();
         }
 
-        _context.Attach(Book).State = EntityState.Modified;
+        public async Task<IActionResult> OnPostAsync(string[] selectedCategories)
+        {
+            if (!ModelState.IsValid)
+            {
+                PopulateAssignedCategoryData(_context, Book);
+                return Page();
+            }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!BookExists(Book.ID))
+            var bookToUpdate = await _context.Book
+                .Include(b => b.BookCategories)
+                .FirstOrDefaultAsync(m => m.ID == Book.ID);
+
+            if (bookToUpdate == null)
             {
                 return NotFound();
             }
-            else
+
+            if (await TryUpdateModelAsync(bookToUpdate, "Book",
+                b => b.Title, b => b.AuthorID, b => b.Price,
+                b => b.PublishingDate, b => b.PublisherID))
             {
-                throw;
+                UpdateBookCategories(_context, selectedCategories, bookToUpdate);
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!BookExists(Book.ID))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return RedirectToPage("./Index");
             }
+
+            PopulateAssignedCategoryData(_context, bookToUpdate);
+            return Page();
         }
 
-        return RedirectToPage("./Index");
-    }
-
-    private bool BookExists(int id)
-    {
-        return _context.Book.Any(e => e.ID == id);
+        private bool BookExists(int id)
+        {
+            return (_context.Book?.Any(e => e.ID == id)).GetValueOrDefault();
+        }
     }
 }

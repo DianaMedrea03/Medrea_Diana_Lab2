@@ -9,6 +9,22 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+// Seed the Category table with default categories if empty
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<Medrea_Diana_Lab2Context>();
+    context.Database.EnsureCreated();
+    if (!context.Category.Any())
+    {
+        context.Category.AddRange(
+            new Medrea_Diana_Lab2.Models.Category { CategoryName = "Beletristica" },
+            new Medrea_Diana_Lab2.Models.Category { CategoryName = "Economie" },
+            new Medrea_Diana_Lab2.Models.Category { CategoryName = "Dezvoltare personala" }
+        );
+        context.SaveChanges();
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

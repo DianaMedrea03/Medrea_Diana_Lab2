@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Medrea_Diana_Lab2.Models
@@ -8,7 +8,7 @@ namespace Medrea_Diana_Lab2.Models
         public int ID { get; set; }
 
         [Display(Name = "Book Title")]
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         public int? AuthorID { get; set; }
         public Authors? Author { get; set; }
 

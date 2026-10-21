@@ -1,44 +1,58 @@
-using Medrea_Diana_Lab2.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using Medrea_Diana_Lab2.Models;
 
-namespace Medrea_Diana_Lab2.Pages.BookPages;
-
-public class CreateModel : PageModel
+namespace Medrea_Diana_Lab2.Pages.BookPages
 {
-    private readonly Medrea_Diana_Lab2Context _context;
-
-    public CreateModel(Medrea_Diana_Lab2Context context)
+    public class CreateModel : BookCategoriesPageModel
     {
-        _context = context;
-    }
+        private readonly Medrea_Diana_Lab2Context _context;
 
-    public IActionResult OnGet()
-    {
-        ViewData["PublisherID"] = new SelectList(_context.Set<Publisher>(), "ID", "PublisherName");
-        ViewData["AuthorID"] = new SelectList(_context.Authors, "ID", "FullName");
-        return Page();
-        
-    }
-
-    [BindProperty]
-    public Book Book { get; set; } = default!;
-
-    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD.
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (!ModelState.IsValid)
+        public CreateModel(Medrea_Diana_Lab2Context context)
         {
-            ViewData["PublisherID"] = new SelectList(_context.Set<Publisher>(), "ID", "PublisherName");
+            _context = context;
+        }
+
+        [BindProperty]
+        public Book Book { get; set; } = default!;
+
+        public IActionResult OnGet()
+        {
             ViewData["AuthorID"] = new SelectList(_context.Authors, "ID", "FullName");
+            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName");
+            // New book has no categories yet — pass an empty Book
+            PopulateAssignedCategoryData(_context, new Book());
             return Page();
         }
 
-        _context.Book.Add(Book);
-        await _context.SaveChangesAsync();
+        // For more information, see https://aka.ms/RazorPagesCRUD.
+        public async Task<IActionResult> OnPostAsync(string[] selectedCategories)
+        {
+            if (!ModelState.IsValid)
+            {
+                PopulateAssignedCategoryData(_context, new Book());
+                return Page();
+            }
 
-        return RedirectToPage("./Index");
+            // Build the BookCategory join entries from the checked checkboxes
+            Book.BookCategories = new List<BookCategory>();
+            foreach (var catId in selectedCategories ?? Array.Empty<string>())
+            {
+                if (int.TryParse(catId, out int id))
+                {
+                    Book.BookCategories.Add(new BookCategory { CategoryID = id });
+                }
+            }
+
+            _context.Book.Add(Book);
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage("./Index");
+        }
     }
 }
