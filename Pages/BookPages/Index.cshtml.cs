@@ -28,8 +28,16 @@ namespace Medrea_Diana_Lab2.Pages.BookPages
 
         public IList<Book> Book { get; set; } = default!;
 
-        public async Task OnGetAsync(int? id)
+        public string TitleSort { get; set; } = "";
+        public string AuthorSort { get; set; } = "";
+        public string CurrentFilter { get; set; } = "";
+
+        public async Task OnGetAsync(int? id, string? sortOrder, string? searchString)
         {
+            TitleSort = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            AuthorSort = sortOrder == "author" ? "author_desc" : "author";
+            CurrentFilter = searchString ?? "";
+
             BookD = new BookData();
             BookD.Books = await _context.Book
                 .Include(b => b.Author)
@@ -39,12 +47,37 @@ namespace Medrea_Diana_Lab2.Pages.BookPages
                 .OrderBy(b => b.Title)
                 .ToListAsync();
 
-            Book = BookD.Books.ToList();
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                BookD.Books = BookD.Books.Where(s =>
+                    (s.Author != null && s.Author.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                    || (s.Author != null && s.Author.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                    || s.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            }
 
             if (id != null)
             {
                 BookID = id.Value;
             }
+
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    BookD.Books = BookD.Books.OrderByDescending(s => s.Title);
+                    break;
+                case "author_desc":
+                    BookD.Books = BookD.Books.OrderByDescending(s => s.Author?.FullName);
+                    break;
+                case "author":
+                    BookD.Books = BookD.Books.OrderBy(s => s.Author?.FullName);
+                    break;
+                default:
+                    BookD.Books = BookD.Books.OrderBy(s => s.Title);
+                    break;
+            }
+
+            Book = BookD.Books.ToList();
         }
     }
 }
+

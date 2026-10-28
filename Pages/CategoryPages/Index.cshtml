@@ -13,30 +13,36 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Category[0].CategoryName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Category[0].BookCategories)
-            </th>
+            <th>Category Name</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Category) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.BookCategories)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.CategoryData.Categories)
+        {
+            string selectedRow = item.ID == Model.CategoryID ? "table-success" : "";
+            <tr class="@selectedRow">
+                <td>@item.CategoryName</td>
+                <td>
+                    <a asp-page="./Index" asp-route-id="@item.ID">Select</a> |
+                    <a asp-page="./Edit" asp-route-id="@item.ID">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.ID">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.ID">Delete</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@if (Model.CategoryData.Books != null && Model.CategoryData.Books.Any())
+{
+    <h3>Books in Selected Category</h3>
+    <table class="table">
+        @foreach (var b in Model.CategoryData.Books)
+        {
+            <tr>
+                <td>@b.Title : @b.Author?.FullName</td>
+            </tr>
+        }
+    </table>
+}
