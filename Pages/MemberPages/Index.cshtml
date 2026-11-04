@@ -1,0 +1,39 @@
+@page
+@model Medrea_Diana_Lab2.Pages.MemberPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<h1>Index</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Adress</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Full Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Member)
+        {
+            <tr>
+                <td>@Html.DisplayFor(model => item.FirstName)</td>
+                <td>@Html.DisplayFor(model => item.LastName)</td>
+                <td>@Html.DisplayFor(model => item.Adress)</td>
+                <td>@Html.DisplayFor(model => item.Email)</td>
+                <td>@Html.DisplayFor(model => item.Phone)</td>
+                <td>@Html.DisplayFor(model => item.FullName)</td>
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@item.ID">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.ID">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
