@@ -49,7 +49,6 @@ namespace Medrea_Diana_Lab2.Areas.Identity.Pages.Account
             _context = context;
         }
 
-        [BindProperty]
         public Member Member { get; set; } = default!;
 
         [BindProperty]
@@ -106,6 +105,7 @@ namespace Medrea_Diana_Lab2.Areas.Identity.Pages.Account
                     _context.Member.Add(Member);
                     await _context.SaveChangesAsync();
 
+                    var role = await _userManager.AddToRoleAsync(user, "User");
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
